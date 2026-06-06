@@ -14,3 +14,11 @@ def setup():
         yield page
         browser.close()
         log.info("Завершення тестування.")
+
+
+@pytest.fixture(scope="session")
+def api_context():
+    with sync_playwright() as p:
+        request_context = p.request.new_context(base_url="https://jsonplaceholder.typicode.com")
+        yield request_context
+        request_context.dispose()

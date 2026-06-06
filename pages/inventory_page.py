@@ -13,3 +13,6 @@ class InventoryPage(BasePage):
 
     def get_cart_badge_number(self):
         return self.page.locator(self.cart_badge).inner_text()
+    
+    def go_to_cart(self):
+        self.click_element(".shopping_cart_link")
