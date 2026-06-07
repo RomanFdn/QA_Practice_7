@@ -46,3 +46,40 @@ def setup(request):
         
         browser.close()
         log.info("Мультибраузерна сесія успішно завершена.")
+import pytest
+from datetime import datetime
+
+def pytest_configure(config):
+    from pytest_metadata.plugin import metadata_key
+    
+    config.stash[metadata_key]["Назва проєкту"] = "QA Automation Framework"
+    config.stash[metadata_key]["Модуль"] = "Системне (E2E) тестування"
+    config.stash[metadata_key]["Час запуску"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    config.stash[metadata_key]["Фреймворк"] = "Playwright & Pytest"
+
+@pytest.hookimpl(hookwrapper=True)
+def pytest_runtest_makereport(item, call):
+    pytest_html = item.config.pluginmanager.getplugin("html")
+    outcome = yield
+    report = outcome.get_result()
+    
+    extras = getattr(report, "extras", [])
+
+    if report.when == "call":
+        extras.append(pytest_html.extras.url("https://www.saucedemo.com/"))
+        
+        if report.failed:
+            page = item.funcargs.get("page", None)
+            if not page:
+                page = item.funcargs.get("setup", None)
+            
+            if page:
+                import os
+                if not os.path.exists("screenshots"):
+                    os.makedirs("screenshots")
+                    
+                screenshot_path = f"screenshots/{item.name}.png"
+                page.screenshot(path=screenshot_path)
+                extras.append(pytest_html.extras.image(screenshot_path))
+        
+        report.extras = extras
